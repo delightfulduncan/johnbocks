@@ -4,32 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Champ'd Up</title>
+  <!-- Optional CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- LOGIN SCREEN -->
   <div id="login-screen">
+    <h1>Enter the Game</h1>
     <input type="text" id="username" placeholder="Your Name">
     <select id="emoji">
       <option value="🙂">🙂</option>
       <option value="😎">😎</option>
       <option value="🤖">🤖</option>
+      <option value="🐱">🐱</option>
+      <option value="🔥">🔥</option>
     </select>
     <button id="enter">Enter</button>
   </div>
 
+  <!-- GAME SCREEN -->
   <div id="game-screen" style="display:none;">
     <h2>Welcome, <span id="welcome"></span></h2>
     <p>Players online: <span id="online-count">0</span></p>
-    <h3 id="game-status">Waiting...</h3>
+    <h3 id="game-status">Waiting for next round...</h3>
     <p>Time left: <span id="timer">0</span>s</p>
-    <button id="join-btn">Play</button>
-    <p id="spectating" style="display:none;">Spectating...</p>
+    <button id="join-btn">Play this round!</button>
+    <p id="spectating" style="display:none;">You are spectating this round.</p>
   </div>
 
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <!-- Your JS -->
   <script src="script.js"></script>
+
 </body>
 </html>
