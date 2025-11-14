@@ -1,12 +1,19 @@
+// -----------------------
+// LOCAL GAME SIMULATION
+// -----------------------
+
 let user = null;
 let playingThisRound = false;
 let currentState = null;
 let timerHandle = null;
 
-// LOGIN
+// -----------------------
+// LOGIN BUTTON
+// -----------------------
 document.getElementById("enter").onclick = () => {
   const name = document.getElementById("username").value.trim();
-  const emoji = document.getElementById("emoji").value;
+  const emoji = document.getElementById("emoji").value || "🙂";
+
   if (!name) return alert("Enter username");
 
   user = { name, emoji };
@@ -15,11 +22,13 @@ document.getElementById("enter").onclick = () => {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("game-screen").style.display = "block";
 
-  // Start local game loop
+  // Start the local game loop
   initLocalGame();
 };
 
-// LOCAL GAME LOOP (no Supabase)
+// -----------------------
+// LOCAL GAME LOOP
+// -----------------------
 function initLocalGame() {
   updateUI();
   gameLoop();
@@ -30,7 +39,7 @@ function updateUI() {
   const end_time = currentState?.end_time || new Date().toISOString();
 
   if (phase === "idle") {
-    document.getElementById("game-status").innerText = "Waiting...";
+    document.getElementById("game-status").innerText = "Waiting for next round...";
     document.getElementById("timer").innerText = "";
     document.getElementById("join-btn").style.display = "none";
     document.getElementById("spectating").style.display = "none";
@@ -49,10 +58,16 @@ function updateUI() {
     if (!playingThisRound) {
       document.getElementById("join-btn").style.display = "none";
       document.getElementById("spectating").style.display = "block";
+    } else {
+      document.getElementById("join-btn").style.display = "none";
+      document.getElementById("spectating").style.display = "none";
     }
   }
 }
 
+// -----------------------
+// COUNTDOWN TIMER
+// -----------------------
 function countdownTo(endTime) {
   clearInterval(timerHandle);
   timerHandle = setInterval(() => {
@@ -61,26 +76,41 @@ function countdownTo(endTime) {
   }, 200);
 }
 
+// -----------------------
+// SIMULATED GAME LOOP
+// -----------------------
 async function gameLoop() {
   while (true) {
+    // PREGAME: 10 seconds
     currentState = { phase: "pregame", end_time: new Date(Date.now() + 10000).toISOString() };
     playingThisRound = false;
     updateUI();
-    await new Promise(r => setTimeout(r, 10000));
+    await sleep(10000);
 
+    // GAME: 10 seconds
     currentState = { phase: "game", end_time: new Date(Date.now() + 10000).toISOString() };
     updateUI();
-    await new Promise(r => setTimeout(r, 10000));
+    await sleep(10000);
 
+    // IDLE: 3 seconds before next round
     currentState = { phase: "idle", end_time: new Date().toISOString() };
     updateUI();
-    await new Promise(r => setTimeout(r, 3000));
+    await sleep(3000);
   }
 }
 
+// -----------------------
 // JOIN BUTTON
+// -----------------------
 document.getElementById("join-btn").onclick = () => {
   playingThisRound = true;
   document.getElementById("join-btn").style.display = "none";
   document.getElementById("spectating").style.display = "none";
 };
+
+// -----------------------
+// HELPER FUNCTION
+// -----------------------
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
