@@ -1,33 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Champ'd Up Clone</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Champ'd Up Simulation</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <!-- LOGIN SCREEN -->
   <div id="login-screen">
-    <h2>Enter Username</h2>
-    <input id="username" placeholder="username"><br><br>
-    <select id="emoji">
-      <option>😀</option><option>😎</option><option>🤖</option>
-      <option>🐱</option><option>🐉</option>
-    </select><br><br>
+    <h1>Enter the Game</h1>
+    <input type="text" id="username" placeholder="Your Name">
+    <input type="text" id="emoji" placeholder="Emoji" maxlength="2">
     <button id="enter">Enter</button>
   </div>
 
+  <!-- GAME SCREEN -->
   <div id="game-screen" style="display:none;">
-    <h3 id="welcome"></h3>
-    <div>Players Online: <span id="online-count">0</span></div>
+    <h2>Welcome, <span id="welcome"></span>!</h2>
 
-    <h1 id="game-status"></h1>
-    <div id="timer"></div>
+    <!-- Online Players -->
+    <p>Players online: <span id="online-count">1</span></p>
 
-    <button id="join-btn" style="display:none;">Play This Round</button>
-    <p id="spectating" style="display:none;">You're spectating this round.</p>
+    <!-- Game Status -->
+    <h3 id="game-status">Waiting for next round...</h3>
+    <p>Time left: <span id="timer">0</span>s</p>
+
+    <!-- Join / Play -->
+    <button id="join-btn">Play this round!</button>
+    <p id="spectating" style="display:none;">You are spectating this round.</p>
   </div>
 
+  <!-- SCRIPT -->
   <script src="script.js"></script>
 </body>
 </html>
