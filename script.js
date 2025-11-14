@@ -13,8 +13,6 @@ let roundId = null;
 // LOGIN BUTTON
 // -----------------------
 document.getElementById("enter").onclick = async () => {
-  console.log("Enter clicked!"); // DEBUG
-
   const name = document.getElementById("username").value.trim();
   const emoji = document.getElementById("emoji").value;
 
@@ -22,8 +20,6 @@ document.getElementById("enter").onclick = async () => {
     alert("Please enter a username!");
     return;
   }
-
-  console.log("Username:", name, "Emoji:", emoji); // DEBUG
 
   try {
     const { data, error } = await supabase.from("players_online").insert({
@@ -38,8 +34,6 @@ document.getElementById("enter").onclick = async () => {
       return;
     }
 
-    console.log("Player added successfully:", data); // DEBUG
-
     user = { name, emoji };
     playerId = data.id;
 
@@ -47,7 +41,6 @@ document.getElementById("enter").onclick = async () => {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("game-screen").style.display = "block";
 
-    // Start heartbeat & subscriptions
     startHeartbeat();
     subscribeOnlinePlayers();
     subscribeGameState();
@@ -57,6 +50,7 @@ document.getElementById("enter").onclick = async () => {
     alert("Unexpected error. Check console.");
   }
 };
+
 // -----------------------
 // KEEP PLAYER ONLINE
 // -----------------------
@@ -73,21 +67,9 @@ function startHeartbeat() {
 // ONLINE PLAYER COUNT
 // -----------------------
 async function subscribeOnlinePlayers() {
-  const { data: players, error } = await supabase
-    .from("players_online")
-    .select("id,last_seen");
+  fetchOnlineCount(); // initial fetch
 
-  updateOnlineCount(players);
-
-  supabase.from("players_online").on("UPDATE", payload => {
-    fetchOnlineCount();
-  }).subscribe();
-
-  supabase.from("players_online").on("INSERT", payload => {
-    fetchOnlineCount();
-  }).subscribe();
-
-  supabase.from("players_online").on("DELETE", payload => {
+  supabase.from("players_online").on("*", payload => {
     fetchOnlineCount();
   }).subscribe();
 }
@@ -97,11 +79,7 @@ async function fetchOnlineCount() {
     .select("*")
     .gte("last_seen", new Date(Date.now() - 15000).toISOString());
 
-  updateOnlineCount(data);
-}
-
-function updateOnlineCount(players) {
-  document.getElementById("online-count").innerText = players.length;
+  document.getElementById("online-count").innerText = data.length;
 }
 
 // -----------------------
@@ -116,7 +94,6 @@ async function subscribeGameState() {
   }).subscribe();
 }
 
-// Update the UI based on game state
 function updateGameUI(game) {
   if (!game) return;
 
@@ -138,7 +115,6 @@ function updateGameUI(game) {
     document.getElementById("spectating").style.display = "none";
   }
 
-  // Countdown timer every second
   clearInterval(window.timerInterval);
   window.timerInterval = setInterval(() => {
     diff--;
