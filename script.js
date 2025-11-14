@@ -13,29 +13,49 @@ let roundId = null;
 // LOGIN BUTTON
 // -----------------------
 document.getElementById("enter").onclick = async () => {
+  console.log("Enter clicked!"); // DEBUG
+
   const name = document.getElementById("username").value.trim();
   const emoji = document.getElementById("emoji").value;
-  if (!name) return alert("Enter username");
 
-  // Insert or update player in players_online
-  const { data, error } = await supabase.from("players_online").insert({
-    username: name,
-    emoji: emoji,
-    last_seen: new Date().toISOString()
-  }).select().single();
+  if (!name) {
+    alert("Please enter a username!");
+    return;
+  }
 
-  if (error) return alert("Error joining game: " + error.message);
+  console.log("Username:", name, "Emoji:", emoji); // DEBUG
 
-  user = { name, emoji };
-  playerId = data.id;
+  try {
+    const { data, error } = await supabase.from("players_online").insert({
+      username: name,
+      emoji: emoji,
+      last_seen: new Date().toISOString()
+    }).select().single();
 
-  document.getElementById("welcome").innerText = `${emoji} ${name}`;
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("game-screen").style.display = "block";
+    if (error) {
+      console.error("Supabase insert error:", error);
+      alert("Error joining game: " + error.message);
+      return;
+    }
 
-  startHeartbeat();
-  subscribeOnlinePlayers();
-  subscribeGameState();
+    console.log("Player added successfully:", data); // DEBUG
+
+    user = { name, emoji };
+    playerId = data.id;
+
+    document.getElementById("welcome").innerText = `${emoji} ${name}`;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("game-screen").style.display = "block";
+
+    // Start heartbeat & subscriptions
+    startHeartbeat();
+    subscribeOnlinePlayers();
+    subscribeGameState();
+
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    alert("Unexpected error. Check console.");
+  }
 };
 
 // -----------------------
