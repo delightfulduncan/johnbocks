@@ -1,136 +1,143 @@
 // -----------------------
-// LOCAL GAME SIMULATION (with fixed online counter)
+// Supabase setup
 // -----------------------
+const SUPABASE_URL = "https://cdjgwdqvcbptdohjczww.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkamd3ZHF2Y2JwdGRvaGpjend3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5Mzk2OTEsImV4cCI6MjA3ODUxNTY5MX0.SUIVOLFjXLDR8pAtQJUrpLKWWTKVkYs9Qw7xEl5EreM";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let user = null;
-let playingThisRound = false;
-let currentState = null;
-let timerHandle = null;
-
-// Simulated online players (1 for current tab + 1-3 extras)
-let onlinePlayers = 1;
+let playerId = null;
+let roundId = null;
 
 // -----------------------
 // LOGIN BUTTON
 // -----------------------
-document.getElementById("enter").onclick = () => {
+document.getElementById("enter").onclick = async () => {
   const name = document.getElementById("username").value.trim();
   const emoji = document.getElementById("emoji").value;
-
   if (!name) return alert("Enter username");
 
+  // Insert or update player in players_online
+  const { data, error } = await supabase.from("players_online").insert({
+    username: name,
+    emoji: emoji,
+    last_seen: new Date().toISOString()
+  }).select().single();
+
+  if (error) return alert("Error joining game: " + error.message);
+
   user = { name, emoji };
-  onlinePlayers = 1 + Math.floor(Math.random() * 3); // simulate extra players
+  playerId = data.id;
 
   document.getElementById("welcome").innerText = `${emoji} ${name}`;
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("game-screen").style.display = "block";
 
-  // Start the local game loop
-  initLocalGame();
+  startHeartbeat();
+  subscribeOnlinePlayers();
+  subscribeGameState();
 };
 
 // -----------------------
-// LOCAL GAME LOOP
+// KEEP PLAYER ONLINE
 // -----------------------
-function initLocalGame() {
-  updateUI();
-  gameLoop();
-  updateOnlineCounter();
+function startHeartbeat() {
+  setInterval(async () => {
+    if (!playerId) return;
+    await supabase.from("players_online").update({
+      last_seen: new Date().toISOString()
+    }).eq("id", playerId);
+  }, 5000);
 }
 
-function updateUI() {
-  const phase = currentState?.phase || "idle";
-  const end_time = currentState?.end_time || new Date().toISOString();
+// -----------------------
+// ONLINE PLAYER COUNT
+// -----------------------
+async function subscribeOnlinePlayers() {
+  const { data: players, error } = await supabase
+    .from("players_online")
+    .select("id,last_seen");
 
-  if (phase === "idle") {
-    document.getElementById("game-status").innerText = "Waiting for next round...";
-    document.getElementById("timer").innerText = "";
+  updateOnlineCount(players);
+
+  supabase.from("players_online").on("UPDATE", payload => {
+    fetchOnlineCount();
+  }).subscribe();
+
+  supabase.from("players_online").on("INSERT", payload => {
+    fetchOnlineCount();
+  }).subscribe();
+
+  supabase.from("players_online").on("DELETE", payload => {
+    fetchOnlineCount();
+  }).subscribe();
+}
+
+async function fetchOnlineCount() {
+  const { data } = await supabase.from("players_online")
+    .select("*")
+    .gte("last_seen", new Date(Date.now() - 15000).toISOString());
+
+  updateOnlineCount(data);
+}
+
+function updateOnlineCount(players) {
+  document.getElementById("online-count").innerText = players.length;
+}
+
+// -----------------------
+// GAME STATE
+// -----------------------
+async function subscribeGameState() {
+  const { data: game } = await supabase.from("game_state").select("*").limit(1).single();
+  updateGameUI(game);
+
+  supabase.from("game_state").on("UPDATE", payload => {
+    updateGameUI(payload.new);
+  }).subscribe();
+}
+
+// Update the UI based on game state
+function updateGameUI(game) {
+  if (!game) return;
+
+  const now = new Date();
+  const end = new Date(game.end_time);
+  let diff = Math.max(0, Math.ceil((end - now) / 1000));
+
+  document.getElementById("timer").innerText = diff;
+  document.getElementById("game-status").innerText = game.phase.toUpperCase();
+
+  if (game.phase === "pregame") {
+    document.getElementById("join-btn").style.display = "block";
+    document.getElementById("spectating").style.display = "none";
+  } else if (game.phase === "game") {
+    document.getElementById("join-btn").style.display = "none";
+    document.getElementById("spectating").style.display = "block";
+  } else {
     document.getElementById("join-btn").style.display = "none";
     document.getElementById("spectating").style.display = "none";
   }
 
-  if (phase === "pregame") {
-    document.getElementById("game-status").innerText = "Round Starting!";
-    countdownTo(end_time);
-    document.getElementById("join-btn").style.display = "block";
-    document.getElementById("spectating").style.display = "none";
-  }
-
-  if (phase === "game") {
-    document.getElementById("game-status").innerText = "GAME IN PROGRESS!";
-    countdownTo(end_time);
-    if (!playingThisRound) {
-      document.getElementById("join-btn").style.display = "none";
-      document.getElementById("spectating").style.display = "block";
-    } else {
-      document.getElementById("join-btn").style.display = "none";
-      document.getElementById("spectating").style.display = "none";
-    }
-  }
-}
-
-// -----------------------
-// COUNTDOWN TIMER
-// -----------------------
-function countdownTo(endTime) {
-  clearInterval(timerHandle);
-  timerHandle = setInterval(() => {
-    const diff = (new Date(endTime) - new Date()) / 1000;
-    document.getElementById("timer").innerText = diff > 0 ? Math.ceil(diff) : "0";
-  }, 200);
-}
-
-// -----------------------
-// SIMULATED GAME LOOP
-// -----------------------
-async function gameLoop() {
-  while (true) {
-    // PREGAME: 10 seconds
-    currentState = { phase: "pregame", end_time: new Date(Date.now() + 10000).toISOString() };
-    playingThisRound = false;
-    updateUI();
-    await sleep(10000);
-
-    // GAME: 10 seconds
-    currentState = { phase: "game", end_time: new Date(Date.now() + 10000).toISOString() };
-    updateUI();
-    await sleep(10000);
-
-    // IDLE: 3 seconds before next round
-    currentState = { phase: "idle", end_time: new Date().toISOString() };
-    updateUI();
-    await sleep(3000);
-  }
+  // Countdown timer every second
+  clearInterval(window.timerInterval);
+  window.timerInterval = setInterval(() => {
+    diff--;
+    document.getElementById("timer").innerText = Math.max(0, diff);
+    if (diff <= 0) clearInterval(window.timerInterval);
+  }, 1000);
 }
 
 // -----------------------
 // JOIN BUTTON
 // -----------------------
-document.getElementById("join-btn").onclick = () => {
-  playingThisRound = true;
+document.getElementById("join-btn").onclick = async () => {
+  if (!playerId || !roundId) return;
+  await supabase.from("game_players").insert({
+    player_id: playerId,
+    round_id: roundId,
+    is_playing: true
+  });
   document.getElementById("join-btn").style.display = "none";
   document.getElementById("spectating").style.display = "none";
 };
-
-// -----------------------
-// ONLINE PLAYER COUNTER
-// -----------------------
-function updateOnlineCounter() {
-  const counterEl = document.getElementById("online-count");
-  counterEl.innerText = onlinePlayers;
-
-  // Simulate small fluctuations only
-  setInterval(() => {
-    const change = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
-    onlinePlayers = Math.max(1, Math.min(4, onlinePlayers + change)); // clamp between 1–4
-    counterEl.innerText = onlinePlayers;
-  }, 5000);
-}
-
-// -----------------------
-// HELPER FUNCTION
-// -----------------------
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
