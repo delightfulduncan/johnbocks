@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local Champ'd Up Simulation</title>
+  <title>Champ'd Up with Supabase</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- LOGIN SCREEN -->
   <div id="login-screen">
     <h1>Enter the Game</h1>
     <input type="text" id="username" placeholder="Your Name">
@@ -21,23 +20,16 @@
     <button id="enter">Enter</button>
   </div>
 
-  <!-- GAME SCREEN -->
   <div id="game-screen" style="display:none;">
     <h2>Welcome, <span id="welcome"></span>!</h2>
-
-    <!-- Online Players -->
-    <p>Players online: <span id="online-count">1</span></p>
-
-    <!-- Game Status -->
+    <p>Players online: <span id="online-count">0</span></p>
     <h3 id="game-status">Waiting for next round...</h3>
     <p>Time left: <span id="timer">0</span>s</p>
-
-    <!-- Join / Play -->
     <button id="join-btn">Play this round!</button>
     <p id="spectating" style="display:none;">You are spectating this round.</p>
   </div>
 
-  <!-- SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
