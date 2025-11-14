@@ -1,5 +1,5 @@
 // -----------------------
-// LOCAL GAME SIMULATION (with fake multiplayer)
+// LOCAL GAME SIMULATION (with fixed online counter)
 // -----------------------
 
 let user = null;
@@ -7,20 +7,20 @@ let playingThisRound = false;
 let currentState = null;
 let timerHandle = null;
 
-// Simulated online players
-let onlinePlayers = 0;
+// Simulated online players (1 for current tab + 1-3 extras)
+let onlinePlayers = 1;
 
 // -----------------------
 // LOGIN BUTTON
 // -----------------------
 document.getElementById("enter").onclick = () => {
   const name = document.getElementById("username").value.trim();
-  const emoji = document.getElementById("emoji").value || "🙂";
+  const emoji = document.getElementById("emoji").value;
 
   if (!name) return alert("Enter username");
 
   user = { name, emoji };
-  onlinePlayers++; // increment simulated online counter
+  onlinePlayers = 1 + Math.floor(Math.random() * 3); // simulate extra players
 
   document.getElementById("welcome").innerText = `${emoji} ${name}`;
   document.getElementById("login-screen").style.display = "none";
@@ -120,10 +120,10 @@ function updateOnlineCounter() {
   const counterEl = document.getElementById("online-count");
   counterEl.innerText = onlinePlayers;
 
-  // Simulate random players joining/leaving every 5-8 seconds
+  // Simulate small fluctuations only
   setInterval(() => {
     const change = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
-    onlinePlayers = Math.max(1, onlinePlayers + change);
+    onlinePlayers = Math.max(1, Math.min(4, onlinePlayers + change)); // clamp between 1–4
     counterEl.innerText = onlinePlayers;
   }, 5000);
 }
