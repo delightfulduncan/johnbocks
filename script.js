@@ -57,7 +57,6 @@ document.getElementById("enter").onclick = async () => {
     alert("Unexpected error. Check console.");
   }
 };
-
 // -----------------------
 // KEEP PLAYER ONLINE
 // -----------------------
