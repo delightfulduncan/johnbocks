@@ -1,11 +1,14 @@
 // -----------------------
-// LOCAL GAME SIMULATION
+// LOCAL GAME SIMULATION (with fake multiplayer)
 // -----------------------
 
 let user = null;
 let playingThisRound = false;
 let currentState = null;
 let timerHandle = null;
+
+// Simulated online players
+let onlinePlayers = 0;
 
 // -----------------------
 // LOGIN BUTTON
@@ -17,6 +20,7 @@ document.getElementById("enter").onclick = () => {
   if (!name) return alert("Enter username");
 
   user = { name, emoji };
+  onlinePlayers++; // increment simulated online counter
 
   document.getElementById("welcome").innerText = `${emoji} ${name}`;
   document.getElementById("login-screen").style.display = "none";
@@ -32,6 +36,7 @@ document.getElementById("enter").onclick = () => {
 function initLocalGame() {
   updateUI();
   gameLoop();
+  updateOnlineCounter();
 }
 
 function updateUI() {
@@ -107,6 +112,21 @@ document.getElementById("join-btn").onclick = () => {
   document.getElementById("join-btn").style.display = "none";
   document.getElementById("spectating").style.display = "none";
 };
+
+// -----------------------
+// ONLINE PLAYER COUNTER
+// -----------------------
+function updateOnlineCounter() {
+  const counterEl = document.getElementById("online-count");
+  counterEl.innerText = onlinePlayers;
+
+  // Simulate random players joining/leaving every 5-8 seconds
+  setInterval(() => {
+    const change = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+    onlinePlayers = Math.max(1, onlinePlayers + change);
+    counterEl.innerText = onlinePlayers;
+  }, 5000);
+}
 
 // -----------------------
 // HELPER FUNCTION
