@@ -1,0 +1,23 @@
+body {
+  font-family: sans-serif;
+  text-align: center;
+  margin-top: 40px;
+  background: #fafafa;
+}
+
+#timer {
+  font-size: 48px;
+  margin: 20px;
+  font-weight: bold;
+}
+
+button {
+  font-size: 18px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+#game-status {
+  font-size: 32px;
+  margin-top: 20px;
+}
